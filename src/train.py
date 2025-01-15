@@ -21,13 +21,14 @@ env1 = TimeLimit(
 # ENJOY!
 state_dim = env.observation_space.shape[0]
 n_action = env.action_space.n 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
 class ReplayBuffer:
     def __init__(self, capacity):
         self.capacity = int(capacity) # capacity of the buffer
         self.data = []
         self.index = 0 # index of the next cell to be filled
-        self.device = 'cuda'
+        self.device =  torch.device("cuda" if torch.cuda.is_available() else "cpu")
     def append(self, s, a, r, s_, d):
         if len(self.data) < self.capacity:
             self.data.append(None)
@@ -62,7 +63,7 @@ def action_greedy(epsilon,env,state,model) :
         action = env.action_space.sample()
     else:
         with torch.no_grad():
-            Q = model(torch.Tensor(state).unsqueeze(0).to('cuda'))
+            Q = model(torch.Tensor(state).unsqueeze(0).to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
             action = torch.argmax(Q).item()  
     return action  
 
@@ -81,11 +82,10 @@ def prefill_replay_buffer(env, replay_buffer, prefill_steps=1000):
     print(f"Replay buffer prefilled with {len(replay_buffer)} transitions.")
     
 
-DQN = DuelingDQNNetwork(state_dim,n_action).to('cuda')
+DQN = DuelingDQNNetwork(state_dim,n_action).to(device)
 
 class ProjectAgent:
     def __init__(self, env=env, model=DQN):
-        device = "cuda"
         self.nb_actions = env.action_space.n
         self.gamma = 0.99
         self.batch_size = 256
@@ -112,7 +112,7 @@ class ProjectAgent:
         self.nb_gradient_steps = 50
         self.update_target_freq = 200
         self.update_target_tau = 0.005
-        self.device = "cuda"
+        self.device =  torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.best_return = -float("inf")
         self.best_return1 = -float('inf')
         self.update_target_strategy = 'ema'
@@ -120,7 +120,7 @@ class ProjectAgent:
     def act(self, observation, use_random=False):
         if use_random or np.random.rand() < self.epsilon:
             return np.random.choice(self.nb_actions)
-        state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0).to("cuda")
+        state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0).to(device)
         q_values = self.model(state)
         return torch.argmax(q_values).item()
 
