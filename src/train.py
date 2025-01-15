@@ -62,7 +62,7 @@ def action_greedy(epsilon,env,state,model) :
         action = env.action_space.sample()
     else:
         with torch.no_grad():
-            Q = model(torch.Tensor(state).unsqueeze(0).to("cuda" if next(model.parameters()).is_cuda else "cpu")
+            Q = model(torch.Tensor(state).unsqueeze(0).to("cuda" if next(model.parameters()).is_cuda else "cpu"))
             action = torch.argmax(Q).item()  
     return action  
 
