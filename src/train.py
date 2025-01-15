@@ -214,7 +214,7 @@ class ProjectAgent:
         torch.save(self.target_model.state_dict(),'best_hiv_target.pth')
 
     def load(self, path):
-        self.model.load_state_dict(torch.load(path, weights_only=True))
+        self.model.load_state_dict(torch.load(path, weights_only=True,map_location=torch.device('cpu')))
         self.target_model.load_state_dict(self.model.state_dict())
 
 
