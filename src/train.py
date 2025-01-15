@@ -35,7 +35,7 @@ class ReplayBuffer:
         self.index = (self.index + 1) % self.capacity
     def sample(self, batch_size):
         batch = random.sample(self.data, batch_size)
-        return list(map(lambda x:torch.Tensor(np.array(x)).to(self.device), list(zip(*batch))))
+        return list(map(lambda x:torch.Tensor(np.array(x)).to(self.), list(zip(*batch))))
     def __len__(self):
         return len(self.data)
 
@@ -88,6 +88,7 @@ class ProjectAgent:
         self.nb_actions = env.action_space.n
         self.gamma = 0.99
         self.batch_size = 256
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         buffer_size = int(1e6)
         self.memory = ReplayBuffer(buffer_size)
         self.epsilon_max = 0.2
@@ -97,7 +98,7 @@ class ProjectAgent:
         self.epsilon_decay = 20000
         self.epsilon_step = (self.epsilon_max - self.epsilon_min) / self.epsilon_stop
         self.model = model
-        self.target_model = deepcopy(self.model).to(device)
+        self.target_model = deepcopy(self.model).to(self.device)
         self.criterion = torch.nn.SmoothL1Loss()
         lr = 1e-3
         adam_beta1, adam_beta2, adam_weight_decay, adam_epsilon = 0.9, 0.999, 1e-2, 1e-8
@@ -111,7 +112,6 @@ class ProjectAgent:
         self.nb_gradient_steps = 50
         self.update_target_freq = 200
         self.update_target_tau = 0.005
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.best_return = -float("inf")
         self.best_return1 = -float('inf')
         self.update_target_strategy = 'ema'
