@@ -27,7 +27,7 @@ class ReplayBuffer:
         self.capacity = int(capacity) # capacity of the buffer
         self.data = []
         self.index = 0 # index of the next cell to be filled
-        self.device = "cuda" if next(model.parameters()).is_cuda else "cpu"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
     def append(self, s, a, r, s_, d):
         if len(self.data) < self.capacity:
             self.data.append(None)
@@ -62,7 +62,7 @@ def action_greedy(epsilon,env,state,model) :
         action = env.action_space.sample()
     else:
         with torch.no_grad():
-            Q = model(torch.Tensor(state).unsqueeze(0).to("cuda" if next(model.parameters()).is_cuda else "cpu"))
+            Q = model(torch.Tensor(state).unsqueeze(0).to("cuda" if torch.cuda.is_available() else "cpu"))
             action = torch.argmax(Q).item()  
     return action  
 
@@ -81,7 +81,7 @@ def prefill_replay_buffer(env, replay_buffer, prefill_steps=1000):
     print(f"Replay buffer prefilled with {len(replay_buffer)} transitions.")
     
 
-DQN = DuelingDQNNetwork(state_dim,n_action).to("cuda" if next(model.parameters()).is_cuda else "cpu")
+DQN = DuelingDQNNetwork(state_dim,n_action).to("cuda" if torch.cuda.is_available() else "cpu")
 
 class ProjectAgent:
     def __init__(self, env=env, model=DQN):
@@ -111,7 +111,7 @@ class ProjectAgent:
         self.nb_gradient_steps = 50
         self.update_target_freq = 200
         self.update_target_tau = 0.005
-        self.device = "cuda" if next(model.parameters()).is_cuda else "cpu"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.best_return = -float("inf")
         self.best_return1 = -float('inf')
         self.update_target_strategy = 'ema'
