@@ -231,5 +231,5 @@ if __name__ == "__main__":
     nb_neurons=256
 
     
-    agent = ProjectAgent(env,DQN)
+    agent = ProjectAgent(env,DQN).to('cuda')
     agent.train()
