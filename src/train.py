@@ -27,7 +27,7 @@ class ReplayBuffer:
         self.capacity = int(capacity) # capacity of the buffer
         self.data = []
         self.index = 0 # index of the next cell to be filled
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     def append(self, s, a, r, s_, d):
         if len(self.data) < self.capacity:
             self.data.append(None)
@@ -62,7 +62,7 @@ def action_greedy(epsilon,env,state,model) :
         action = env.action_space.sample()
     else:
         with torch.no_grad():
-            Q = model(torch.Tensor(state).unsqueeze(0).to("cuda" if torch.cuda.is_available() else "cpu"))
+            Q = model(torch.Tensor(state).unsqueeze(0).to('cuda' if torch.cuda.is_available() else 'cpu')
             action = torch.argmax(Q).item()  
     return action  
 
@@ -81,44 +81,37 @@ def prefill_replay_buffer(env, replay_buffer, prefill_steps=1000):
     print(f"Replay buffer prefilled with {len(replay_buffer)} transitions.")
     
 
-DQN = DuelingDQNNetwork(state_dim,n_action).to("cuda" if torch.cuda.is_available() else "cpu")
+DQN = DuelingDQNNetwork(state_dim,n_action).to('cuda' if torch.cuda.is_available() else 'cpu')
 
 class ProjectAgent:
     def __init__(self, env=env, model=DQN):
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.nb_actions = env.action_space.n
         self.gamma = 0.99
         self.batch_size = 256
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         buffer_size = int(1e6)
         self.memory = ReplayBuffer(buffer_size)
-        self.epsilon_max = 0.2
-        self.epsilon = self.epsilon_max
+        self.epsilon_max = 0.3
         self.epsilon_min = 0.01
-        self.epsilon_stop = 1000
-        self.epsilon_decay = 20000
-        self.epsilon_step = (self.epsilon_max - self.epsilon_min) / self.epsilon_stop
+        self.period = 7500  # Period for epsilon oscillation (steps)
         self.model = model
-        self.target_model = deepcopy(self.model).to(self.device)
+        self.target_model = deepcopy(self.model).to(device)
         self.criterion = torch.nn.SmoothL1Loss()
         lr = 1e-3
-        adam_beta1, adam_beta2, adam_weight_decay, adam_epsilon = 0.9, 0.999, 1e-2, 1e-8
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
-            lr=lr,
-            betas=(adam_beta1, adam_beta2),
-            weight_decay=adam_weight_decay,
-            eps=adam_epsilon,
-        )
+            lr=lr)
         self.nb_gradient_steps = 50
-        self.update_target_freq = 200
+        self.update_target_freq = 20
         self.update_target_tau = 0.005
+        self.device = "cuda"
         self.best_return = -float("inf")
         self.best_return1 = -float('inf')
         self.update_target_strategy = 'ema'
 
     def act(self, observation, use_random=False):
 
-        state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0).to(self.device)
+        state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0).to('cuda' if torch.cuda.is_available() else 'cpu')
         q_values = self.model(state)
         return torch.argmax(q_values).item()
 
@@ -153,15 +146,17 @@ class ProjectAgent:
         step = 0
         prefill_replay_buffer(env, self.memory, prefill_steps=1000)
         prefill_replay_buffer(env1, self.memory, 1000)
-        while episode < max_episode:
-            if step > self.epsilon_decay:
-                self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * \
-               np.exp(-step / self.epsilon_decay)
 
-            action = action_greedy(self.epsilon, env, state, self.model)
+        while episode < max_episode:
+            # Strictly periodic epsilon decay
+            epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * (
+                0.5 + 0.5 * np.sin(2 * np.pi * step / self.period)
+            )
+
+            action = action_greedy(epsilon, env, state, self.model)
             next_state, reward, done, trunc, _ = env.step(action)
             self.memory.append(state, action, reward, next_state, done)
-            action1 = action_greedy(self.epsilon, env1, state1, self.model)
+            action1 = action_greedy(epsilon, env1, state1, self.model)
             next_state1, reward1, done1, trunc1, _ = env1.step(action1)
             self.memory.append(state1, action1, reward1, next_state1, done1)
             episode_cum_reward += reward 
@@ -177,18 +172,18 @@ class ProjectAgent:
                 model_state_dict = self.model.state_dict()
                 tau = self.update_target_tau
                 for key in model_state_dict:
-                    target_state_dict[key] = tau*model_state_dict[key] + (1-tau)*target_state_dict[key]
+                    target_state_dict[key] = tau * model_state_dict[key] + (1 - tau) * target_state_dict[key]
                 self.target_model.load_state_dict(target_state_dict)
 
             step += 1
-            if done or trunc :
+            if done or trunc:
                 episode += 1
                 score_agent: float = evaluate_HIV(agent=agent, nb_episode=1)
                 print(
                     "Episode ",
                     "{:3d}".format(episode),
-                     "epsilon ",
-                    self.epsilon,
+                    "epsilon ",
+                    "{:.2e}".format(epsilon),
                     ', step ',
                     step,
                     ", batch size ",
@@ -205,20 +200,21 @@ class ProjectAgent:
                 if score_agent > self.best_return1:
                     self.best_return1 = score_agent
                     self.save('best_score.pth')
-                    print('The model was saved succesfuly with score ',self.best_return1)
+                    print('The model was saved successfully with score ', self.best_return1)
                 state, _ = env.reset()
-                state1,_ = env1.reset()
+                state1, _ = env1.reset()
                 episode_return.append(episode_cum_reward)
                 episode_cum_reward = 0
             else:
                 state = next_state
+                state1 = next_state1
 
     def save(self, path):
         torch.save(self.model.state_dict(), path)
         torch.save(self.target_model.state_dict(),'best_hiv_target.pth')
 
     def load(self, path):
-        self.model.load_state_dict(torch.load(path, weights_only=True,map_location=torch.device('cpu')))
+        self.model.load_state_dict(torch.load(path, weights_only=True))
         self.target_model.load_state_dict(self.model.state_dict())
 
 
