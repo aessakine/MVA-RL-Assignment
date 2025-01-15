@@ -6,6 +6,7 @@ import torch
 from evaluate import evaluate_HIV, evaluate_HIV_population
 import torch.nn as nn
 from copy import deepcopy
+import torch.nn.functional as F
 
 
 env = TimeLimit(
@@ -43,17 +44,19 @@ class ReplayBuffer:
 class DuelingDQNNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(DuelingDQNNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 256)
+        self.fc1 = nn.Linear(input_dim, 512)
+        self.fc2 = nn.Linear(512, 256)
         self.fc_value = nn.Linear(256, 128)
         self.value = nn.Linear(128, 1)
         self.fc_advantage = nn.Linear(256, 128)
         self.advantage = nn.Linear(128, output_dim)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        value = torch.relu(self.fc_value(x))
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc2(x))
+        value = F.leaky_relu(self.fc_value(x))
         value = self.value(value)
-        advantage = torch.relu(self.fc_advantage(x))
+        advantage = F.leaky_relu(self.fc_advantage(x))
         advantage = self.advantage(advantage)
         return value + (advantage - advantage.mean(dim=1, keepdim=True))
 
