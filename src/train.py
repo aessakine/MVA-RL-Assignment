@@ -44,21 +44,24 @@ class ReplayBuffer:
 class DuelingDQNNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(DuelingDQNNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 512)
-        self.fc2 = nn.Linear(512, 256)
+        self.fc1 = nn.Linear(input_dim, 1024)  # Increased neurons
+        self.fc2 = nn.Linear(1024, 512)       # Added an additional layer with more neurons
+        self.fc3 = nn.Linear(512, 256)
         self.fc_value = nn.Linear(256, 128)
         self.value = nn.Linear(128, 1)
         self.fc_advantage = nn.Linear(256, 128)
         self.advantage = nn.Linear(128, output_dim)
 
     def forward(self, x):
-        x = F.leaky_relu(self.fc1(x))
-        x = F.leaky_relu(self.fc2(x))
-        value = F.leaky_relu(self.fc_value(x))
+        x = F.silu(self.fc1(x))  # Swish activation (SiLU)
+        x = F.silu(self.fc2(x))
+        x = F.silu(self.fc3(x))
+        value = F.silu(self.fc_value(x))
         value = self.value(value)
-        advantage = F.leaky_relu(self.fc_advantage(x))
+        advantage = F.silu(self.fc_advantage(x))
         advantage = self.advantage(advantage)
         return value + (advantage - advantage.mean(dim=1, keepdim=True))
+
 
 def action_greedy(epsilon,env,state,model) :
     if np.random.rand() < epsilon:
@@ -149,12 +152,13 @@ class ProjectAgent:
         step = 0
         prefill_replay_buffer(env, self.memory, prefill_steps=1000)
         prefill_replay_buffer(env1, self.memory, 1000)
+        epsilon = 0.05
 
         while episode < max_episode:
             # Strictly periodic epsilon decay
-            epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * (
-                0.5 + 0.5 * np.sin(2 * np.pi * step / self.period)
-            )
+            #epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * (
+            #    0.5 + 0.5 * np.sin(2 * np.pi * step / self.period)
+            #)
 
             action = action_greedy(epsilon, env, state, self.model)
             next_state, reward, done, trunc, _ = env.step(action)
