@@ -3,13 +3,9 @@
 
 ## Project Introduction
 
-### Overview
-
-Welcome to the Reinforcement Learning Class Assignment project repository! This project is designed to provide you with hands-on experience in developing reinforcement learning (RL) agents. You will engage with essential components of an RL system, implementing policies to solve RL environments. This repository serves as your starting point, containing the foundational structure and files necessary for the assignment. 
-  
 ### Repository Structure
 
-The repository is organized as follows to facilitate your development process:
+The repository is organized as follows:
 ```
 ├── README.md 
 ├── requirement.txt # Lists all the necessary dependencies to set up your development environment. (DO NOT REMOVE PYTEST [*])
@@ -20,24 +16,6 @@ The repository is organized as follows to facilitate your development process:
     ├── train.py # Training script. (YOUR CODE GOES HERE)
     └── main.py # Serves as the entry point for automatically evaluating your agent. (DO NOT MODIFY [**])
 ```
-
-\[*\] `pytest` is necessary to the automated evaluation system, don't remove this dependency. Add however any dependency that is necessary to run your agent.  
-\[**\] Modifying these files will break the automated evaluation system and assign a grade of zero : don't do it, really.
-
-### Assignment Task
-
-Your primary task is to create and integrate a training script named `train.py` within this framework. This script should encompass the training logic for your agent, adhering to the specifications outlined in the `interface.py` file. Specifically, you are expected to:
-
-- Develop an `Agent` class that conforms to the protocol defined in `interface.py`. This class should encapsulate the functionality for your agent, including the ability to:
-  - Decide on actions based on observations from the environment.
-  - Save what it has learned to disk.
-  - Load a previously saved model for further inference or evaluation.
-
-You should run your training locally (on your laptop, using colab, etc. as you prefer), then save your model and push both your code and your saved model to your GitHub Classroom repo.
-
-### Evaluation process
-
-When you push to your GitHub Classroom repo, GitHub Classroom will automatically trigger a series of actions, one of which involves running the `main.py` script. The `main.py` script acts as the entry point for evaluating your RL agent. It is designed to instantiate your agent, interact with the environment, and report the agent's scores which participate in the final grade.
 
 ### The problem to solve
 
@@ -65,11 +43,11 @@ The reward model encourages high values of `E` and low values of `V`, while pena
 
 The patient's immune system is simulated via a system of deterministic non-linear equations.
 
-By default, the `HIVPatient` class' constructor instantiates always the same patient (the one whose immune system was clinically identified by Adams et al.). However, calling `HIVPatient(domain_randomization=True)` draws a random patient uniformly.
-
-Your task is to write, train, and save an RL agent which interacts with the default patient for at most 200 time steps and optimizes a structured treatment interruption strategy.
-
-### Grading
+The goals is to: 
+  - Develop an `Agent` class that conforms to the protocol defined in `interface.py`. This class should encapsulate the functionality for your agent, including the ability to:
+  - Decide on actions based on observations from the environment.
+  - Save what it has learned to disk.
+  - Load a previously saved model for further inference or evaluation.
 
 The final grade, out of nine points, is made of two parts.  
 First, your agent will be evaluated on the default patient. There are six score thresholds: every time your agent passes a threshold, you gain one point.  
