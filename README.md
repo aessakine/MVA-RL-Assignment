@@ -8,13 +8,14 @@
 The repository is organized as follows:
 ```
 ├── README.md 
-├── requirement.txt # Lists all the necessary dependencies to set up your development environment. (DO NOT REMOVE PYTEST [*])
+├── requirement.txt # Lists all the necessary dependencies to set up your development environment.
+├── best_hiv_agent.pth # Weights of the best agent. 
 └── src
-    ├── env_hiv.py # Defines the simulation environment your agent will interact with. (DO NOT MODIFY [**])
-    ├── evaluate.py # Contains the evaluation function to assess your agent's performance. (DO NOT MODIFY [**])
-    ├── interface.py # Provides the agent interface, outlining the methods your agent must implement. (DO NOT MODIFY [**])
-    ├── train.py # Training script. (YOUR CODE GOES HERE)
-    └── main.py # Serves as the entry point for automatically evaluating your agent. (DO NOT MODIFY [**])
+    ├── env_hiv.py # Defines the simulation environment your agent will interact with. 
+    ├── evaluate.py # Contains the evaluation function to assess your agent's performance. 
+    ├── interface.py # Provides the agent interface, outlining the methods your agent must implement. 
+    ├── train.py # Training script. 
+    └── main.py # Serves as the entry point for automatically evaluating your agent. 
 ```
 
 ### The problem to solve
@@ -43,8 +44,7 @@ The reward model encourages high values of `E` and low values of `V`, while pena
 
 The patient's immune system is simulated via a system of deterministic non-linear equations.
 
-The goals is to: 
-  - Develop an `Agent` class that conforms to the protocol defined in `interface.py`. This class should encapsulate the functionality for your agent, including the ability to:
+The goals is to write the 'train.py' script to develop an `Agent` class that conforms to the protocol defined in `interface.py`. This class should encapsulate the functionality for your agent, including the ability to:
   - Decide on actions based on observations from the environment.
   - Save what it has learned to disk.
   - Load a previously saved model for further inference or evaluation.
