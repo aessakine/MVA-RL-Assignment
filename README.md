@@ -23,7 +23,7 @@ The repository is organized as follows:
 This challenge is inspired by the 2006 paper by Ernst et al. titled "[Clinical data based optimal STI strategies for HIV: a reinforcement learning approach](https://ieeexplore.ieee.org/abstract/document/4177178)". It is based on the 2004 simulation model of Adams et al. published in the "[Dynamic Multidrung Therapies for HIV: Optimal and STI Control Approaches](https://www.aimspress.com/fileOther/PDF/MBE/1551-0018_2004_2_223.pdf)" paper.  
 You don't have to read these papers (although the first might be a great inspiration for your work, while the second might provide better insights as to the physical quantities manipulated). In particular, your agent doesn't have to mimic that of Ernst et al.! Feel free to be creative and develop your own solution (FQI, DQN, evolutionary search, policy gradients: your choice).
 
-You are provided with the simulator class `HIVPatient` of an HIV infected patient's immune system. This simulator follows the Gymnasium interface and provides the usual functions. Your goal is to design a closed-loop control strategy which performs structured treatment interruption, ie. a control strategy which keeps the patient healthy while avoiding prescribing drugs at every time step. 
+the simulator class `HIVPatient` of an HIV infected patient's immune system was provided. This simulator follows the Gymnasium interface and provides the usual functions. Your goal is to design a closed-loop control strategy which performs structured treatment interruption, ie. a control strategy which keeps the patient healthy while avoiding prescribing drugs at every time step. 
 
 The `HIVPatient` class implements a simulator of the patient's immune system through 6 state variables, which are observed every 5 days (one time step):
 - `T1` number of healthy type 1 cells (CD4+ T-lymphocytes), 
@@ -49,6 +49,5 @@ The goals is to write the 'train.py' script to develop an `Agent` class that con
   - Save what it has learned to disk.
   - Load a previously saved model for further inference or evaluation.
 
-The final grade, out of nine points, is made of two parts.  
-First, your agent will be evaluated on the default patient. There are six score thresholds: every time your agent passes a threshold, you gain one point.  
-Then, your agent will be evaluated on the population of patients. There are three score thresholds: every time your agent passes a threshold, you gain another point.  
+### My approach
+In train.py, I implement a Double Dueling DQN for the HIVPatient task with a 200-step TimeLimit and two data-collection environments (one fixed, one with domain randomization). The Q-network has three hidden layers (1024→512→256, SiLU) with separate value/advantage heads; actions are chosen ε-greedily with ε=0.05. Experience is stored in a replay buffer of 1e6 transitions and prefilled with 1,000 random steps from each environment; training uses batches of 256 with SmoothL1 loss and Adam (lr=1e-3), taking 50 gradient updates per interaction step. Targets follow Double DQN with a separate target network updated by EMA (τ=0.005, with optional periodic hard copy), and I use γ=0.99. After each episode, I evaluate the agent and checkpoint the best model by both return and evaluation score. 
